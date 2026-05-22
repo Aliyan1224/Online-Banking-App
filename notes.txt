@@ -1,0 +1,10 @@
+Core Features to Include (MVP) 
+To make the project manageable, focus on these essential components:
+Secure Authentication: User login, registration, and session management.
+Dashboard: Displays account summaries, balances, and recent transaction history.
+Funds Transfer: Peer-to-peer transfers within the application.
+Transaction History: A complete, auditable log of past transactions.
+Profile Management: Allowing users to view/update their personal details. 
+GitHub
+GitHub
+ +4
