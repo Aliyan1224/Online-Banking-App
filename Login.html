@@ -12,13 +12,16 @@
     <div class="card-container">
         <div class="card">
             <h1>Login</h1>
-            <div class="input-forms">
-                <input class="forms" type="Account Number" placeholder="Account Number">
-                <input class="forms" type="Password" placeholder="Password">
-            </div>
-            <button class="button" type="submit">Login</button>
+            <div id="error-message"></div>
+            <form class="input-forms" id="login-form">
+                <input class="forms" type="text" placeholder="Account Number" id="login-account-number" required>
+                <input class="forms" type="password" placeholder="Password" id="login-password" required>
+                <button class="button" type="submit" id="login-submit">Login</button>
+            </form>
         </div>
     </div>
+
+    <script src="frontend/login.js"></script>
 </body>
 
 </html>

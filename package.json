@@ -7,6 +7,11 @@
   "type": "commonjs",
   "main": "database.js",
   "scripts": {
+    "run": "node --env-file=.env server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "jsonwebtoken": "^9.0.3"
   }
 }

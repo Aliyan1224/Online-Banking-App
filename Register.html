@@ -11,13 +11,15 @@
 <body>
     <div class="register-card">
         <h1>Register</h1>
-        <div class="forms-input">
-            <input class="forms" type="Name" placeholder="Name">
-            <input class="forms" type="Email" placeholder="Email">
-            <input class="forms" type="Password" placeholder="Password">
-        </div>
-        <button class="button" type="submit">Register</button>
+        <div id="error-message"></div>
+        <form class="forms-input" id="register-form>
+            <input class="forms" type="name" placeholder="Name" id="register-name" required>
+            <input class="forms" type="email" placeholder="Email" id="register-email" required>
+            <input class="forms" type="password" placeholder="Password" id="register-password" required>
+            <button class="button" type="submit" id="register-submit">Register</button>
+        </form>
     </div>
+    <script src="frontend/register.js"></script>
 </body>
 
 </html>
