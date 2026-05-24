@@ -15,6 +15,8 @@ async function fetchUserProfile() {
 
     if (!response.ok) {
       alert("401: Unautorized... Please login first!");
+      // window.location.href = "login.html";
+      return;
     }
 
     if (data.success && data.user) {

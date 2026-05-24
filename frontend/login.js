@@ -32,8 +32,8 @@ loginForm.addEventListener("submit", async function (e) {
     data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || "Invalid login credentials.");
       errorDisplay.style.display = "block";
+      throw new Error(data.error || "Invalid login credentials.");
     }
 
     if (data.success || data.token) {

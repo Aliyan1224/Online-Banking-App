@@ -1,12 +1,14 @@
-const http = require("http");
-const crypto = require("crypto");
-const jwt = require("jsonwebtoken");
-const db = require("./mockDB.js");
-const bcrypt = require("bcrypt");
+import http from "http";
+import crypto from "crypto";
+import jwt from "jsonwebtoken";
+import * as db from "./mockDB.js";
+import bcrypt from "bcrypt";
+
 
 const PORT = 6767;
 const JWT_SECRET_KEY =
   process.env.JWT_SECRET || "SECRET_JSON_KEY_VERY_VERY_CONFIDENTIAL_1255777";
+const ALLOWED_ORIGIN = "http://localhost:5500"; // Security Vulneribility. MUST be changed on production (MUST!!!)
 
 async function parseRequestBody(req) {
   return new Promise((resolve, reject) => {
@@ -25,11 +27,11 @@ async function parseRequestBody(req) {
 }
 
 function sendResponse(response, statusCode, payload) {
-  const origin = "http://127.0.0.1:5500" || "*"; // Security Vulneribility. MUST be changed on production (MUST!!!)
   response.writeHead(statusCode, {
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": origin, 
+    "Access-Control-Allow-Origin": ALLOWED_ORIGIN, 
     "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
     "Access-Control-Allow-Credentials": "true"
   });
   response.end(JSON.stringify(payload));
@@ -40,12 +42,11 @@ const server = http.createServer(async (request, response) => {
   const url = request.url;
   console.log(url)
   const method = request.method;
-  const origin = "http://127.0.0.1:5500" || "*"; // Security Vulneribility. MUST be changed on production (MUST!!!)
 
   // CORS Preflight
   if (method === "OPTIONS") {
     response.writeHead(204, {
-      "Access-Control-Allow-Origin": origin,
+      "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
       "Access-Control-Allow-Credentials": "true",
       "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type",
@@ -76,7 +77,6 @@ const server = http.createServer(async (request, response) => {
         expiresIn: "10m",
       });
       const cookieConfig = `token=${token}; HttpOnly; SameSite=Lax; Max-Age=600; Path=/`; // have to add a secure flag if/after plublishing it in a secure https site domain! also change sameSit from Lax to Strict
-      const origin = "http://127.0.0.1:5500" || "*"; // Security Vulneribility. MUST be changed on production (MUST!!!)
       response.setHeader("Set-Cookie", cookieConfig);
       return sendResponse(response, 200,{ success: true, message: "Login successful!" });
     } catch (error) {
@@ -119,7 +119,8 @@ const server = http.createServer(async (request, response) => {
       const token = jwt.sign({ accountNumber: newUser.accountNumber }, JWT_SECRET_KEY, {
         expiresIn: "10m",
       });
-      const cookieConfig = `token=${token}; HttpOnly; SameSite=None; Max-Age=600; Path=/`;
+      const cookieConfig = `token=${token}; HttpOnly; SameSite=Lax; Max-Age=600; Path=/`;
+
       
       response.setHeader("Set-Cookie", cookieConfig);
       return sendResponse(response, 201, {

@@ -4,7 +4,7 @@
   "description": "",
   "license": "ISC",
   "author": "",
-  "type": "commonjs",
+  "type": "module",
   "main": "database.js",
   "scripts": {
     "run": "node --watch --env-file=backend/.env backend/server.js",
