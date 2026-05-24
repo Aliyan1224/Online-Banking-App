@@ -1,3 +1,4 @@
 /backend/.env
 commitMsg.txt
 node_modules
+/backend/test.rest
