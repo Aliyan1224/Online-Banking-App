@@ -158,6 +158,90 @@ h1 {
   color: var(--text-white);
 }
 
+/* account info card */
+.account-info-card, .deposit-card, .withdraw-card {
+  display: none; /* js change */
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: var(--deep-purple);
+  border: 2px solid var(--magenta);
+  padding: 20px;
+  border-radius: 10px;
+  width: 320px;
+  z-index: 1000;
+}
+
+.account-info-card h3 {
+  margin-bottom: 15px;
+  color: var(--pink-accent);
+}
+
+.account-info-card p {
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+#close-account-info {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background: transparent;
+  color: var(--text-white);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* deposit card */
+
+.deposit-card input, .withdraw-card input{
+  height: 38px;
+  margin: 10px 0;
+  padding: 8px 12px;
+  background-color:#2a2a2d;
+  color: var(--text-white);
+  border: 1px solid var(--magenta);
+  border-radius: 8px;
+}
+
+.deposit-card form, .withdraw-card form {
+  display: flex;
+  flex-direction: column;
+}
+
+.deposit-card input, .withdraw-card input {
+  width: 100%;
+}
+
+#close-deposit-card, #close-withdraw-card {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.warning {
+  color: #fbbf24;
+}
+
+.withdraw-card button:disabled {
+  background: #4a4a4a;
+  color: #8a8a8a;
+  cursor: not-allowed;
+}
+
+.action-submit-btn{
+  border-radius: 8px;
+  padding: 7px;
+  background-color: var(--pink-accent);
+  color: var(--text-white);
+}
+
+/* account info card */
+
+
 /* Balance Card */
 .card1 {
   width: 100%;

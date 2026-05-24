@@ -146,6 +146,7 @@ const server = http.createServer(async (request, response) => {
         email,
         password_hash: hashedPassword,
         role: "user",
+        dateCreated: Date.now()
       };
       db.createUser(newUser);
 
@@ -216,6 +217,7 @@ const server = http.createServer(async (request, response) => {
           name: user.name,
           email: user.email,
           role: user.role,
+          dateCreated: user.dateCreated
         },
         wallet: wallet
           ? {

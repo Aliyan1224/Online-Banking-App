@@ -1,18 +1,22 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
     <div class="nav">
-        <a href="Home.html"><h1>NeoPay</h1></a>
+        <a href="Home.html">
+            <h1>NeoPay</h1>
+        </a>
         <div class="buttons">
-            <button class="button button1">Account Info</button>
+            <button class="button button1" id="dash-account-info">
+                Account Info
+            </button>
             <a href="Login.html"><button class="button button2">Logout</button></a>
         </div>
     </div>
@@ -25,10 +29,42 @@
         </div>
     </div>
     <div class="items">
-        <button class="button-item">Withdraw</button>
-        <button class="button-item">Deposit</button>
-        <button class="button-item">Transfer Funds</button>
-        <button class="button-item">Transaction History</button>
+        <button class="button-item" id="withdraw-action-button">Withdraw</button>
+        <button class="button-item" id="deposit-action-button">Deposit</button>
+        <button class="button-item" id="transfer-action-button">Transfer Funds</button>
+        <button class="button-item" id="txn-history-action-button">Transaction History</button>
+    </div>
+    <!--  acc info card -->
+    <div class="account-info-card" id="account-info-card">
+        <button id="close-account-info">❌</button>
+        <h3>Account Details</h3>
+        <p><b>Name:</b> <span id="info-name">Aliyan Ahmed</span></p>
+        <p><b>Account No:</b> <span id="info-account-number">XXXXXXXX</span></p>
+        <p><b>Email:</b> <span id="info-email">abc@example.com</span></p>
+        <p><b>Wallet ID:</b> <span id="info-wallet-id">XXXXXX</span></p>
+        <p><b>Balance:</b> <span id="info-balance">$24,000.00</span></p>
+        <p><b>Created:</b> <span id="info-date">May 24, 2026</span></p>
+    </div>
+
+    <div class="deposit-card" id="deposit-card">
+        <button id="close-deposit-card">❌</button>
+        <h3>Deposit Funds</h3>
+        <p>Enter Deposit Amount:</p>
+        <form id="deposit-form">
+            <input type="text" id="deposit-input" placeholder="Amount" required />
+            <button type="submit" id="deposit-submit" class="action-submit-btn">Deposit</button>
+        </form>
+    </div>
+
+        <div class="withdraw-card" id="withdraw-card">
+        <button id="close-withdraw-card">❌</button>
+        <h3>Withdraw Funds</h3>
+        <p>Enter Withdrawal Amount:</p>
+        <form id="withdraw-form">
+            <input type="text" id="withdraw-input" placeholder="Amount" required />
+            <p id="withdraw-info-interactive">Remaining Balance: </p>
+            <button type="submit" id="withdraw-submit" class="action-submit-btn">Withdraw</button>
+        </form>
     </div>
 
     <script type="module" src="frontend/dashboard.js"></script>
