@@ -1,5 +1,6 @@
+import { apiBase } from "../utils/frontendUtils.js";
+
 let isAuthenticating = false;
-const apiBase = "http://localhost:6767/";
 const loginForm = document.getElementById("login-form");
 const accNumberInput = document.getElementById("login-account-number");
 const passwordInput = document.getElementById("login-password");
@@ -32,12 +33,14 @@ loginForm.addEventListener("submit", async function (e) {
 
     if (!response.ok) {
       throw new Error(data.error || "Invalid login credentials.");
+      errorDisplay.style.display = "block";
     }
 
     if (data.success || data.token) {
-      window.location.href = "/dashboard.html";
+      window.location.href = "dashboard.html";
     }
   } catch (error) {
+    errorDisplay.style.display = "block";
     errorDisplay.textContent = error.message;
   } finally {
     isAuthenticating = false;

@@ -1,5 +1,6 @@
+import { apiBase } from "../utils/frontendUtils.js";
+
 let isAuthenticating = false;
-const apiBase = "http://localhost:6767/";
 const registerForm = document.getElementById("register-form");
 const nameInput = document.getElementById("register-name");
 const emailInput = document.getElementById("register-email");
@@ -33,13 +34,16 @@ registerForm.addEventListener("submit", async function (e) {
     data = await response.json();
 
     if (!response.ok) {
+      errorDisplay.style.display = "block";
+      errorDisplay.textContent = data.error.message;
       throw new Error(data.error || "Invalid credentials.");
     }
 
     if (data.success || data.token) {
-      window.location.href = "/dashboard.html";
+      window.location.href = "dashboard.html";
     }
   } catch (error) {
+    errorDisplay.style.display = "block";
     errorDisplay.textContent = error.message;
   } finally {
     isAuthenticating = false;

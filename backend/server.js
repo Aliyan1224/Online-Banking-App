@@ -25,11 +25,12 @@ async function parseRequestBody(req) {
 }
 
 function sendResponse(response, statusCode, payload) {
-  const origin = request.headers.origin || "*"; // Security Vulneribility. MUST be changed on production (MUST!!!)
+  const origin = "http://127.0.0.1:5500" || "*"; // Security Vulneribility. MUST be changed on production (MUST!!!)
   response.writeHead(statusCode, {
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*", 
+    "Access-Control-Allow-Origin": origin, 
     "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Credentials": "true"
   });
   response.end(JSON.stringify(payload));
 }
@@ -37,13 +38,15 @@ function sendResponse(response, statusCode, payload) {
 const server = http.createServer(async (request, response) => {
   response.setHeader("Content-Type", "application/json");
   const url = request.url;
+  console.log(url)
   const method = request.method;
-  const origin = request.headers.origin || "*"; // Security Vulneribility. MUST be changed on production (MUST!!!)
+  const origin = "http://127.0.0.1:5500" || "*"; // Security Vulneribility. MUST be changed on production (MUST!!!)
 
   // CORS Preflight
   if (method === "OPTIONS") {
     response.writeHead(204, {
-      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Origin": origin,
+      "Access-Control-Allow-Credentials": "true",
       "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type",
     });
@@ -72,15 +75,10 @@ const server = http.createServer(async (request, response) => {
       const token = jwt.sign({ accountNumber }, JWT_SECRET_KEY, {
         expiresIn: "10m",
       });
-      const cookieConfig = `token=${token}; HttpOnly; Secure; SameSite=Strict; Max-Age=600; Path=/`;
-      response.writeHead(200, {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-        "Set-Cookie": cookieConfig,
-      });
-      return response.end(
-        JSON.stringify({ success: true, message: "Login successful!" }),
-      );
+      const cookieConfig = `token=${token}; HttpOnly; SameSite=Lax; Max-Age=600; Path=/`; // have to add a secure flag if/after plublishing it in a secure https site domain! also change sameSit from Lax to Strict
+      const origin = "http://127.0.0.1:5500" || "*"; // Security Vulneribility. MUST be changed on production (MUST!!!)
+      response.setHeader("Set-Cookie", cookieConfig);
+      return sendResponse(response, 200,{ success: true, message: "Login successful!" });
     } catch (error) {
       return sendResponse(response, 500, { error: "Internal Server Error" });
     }
@@ -92,12 +90,12 @@ const server = http.createServer(async (request, response) => {
       const { name, email, password } = body;
 
       if (!name || !email || !password) {
-        return sendResponse(res, 400, { error: "Missing required fields" });
+        return sendResponse(response, 400, { error: "Missing required fields" });
       }
 
       const userExists = db.findUserByEmail(email);
       if (userExists) {
-        return sendResponse(res, 409, { error: "Email already registered" });
+        return sendResponse(response, 409, { error: "Email already registered" });
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -118,10 +116,17 @@ const server = http.createServer(async (request, response) => {
         currency: "PKR",
       });
 
-      return sendResponse(res, 201, {
-        success: true,
-        message: "User registered successfully!",
+      const token = jwt.sign({ accountNumber: newUser.accountNumber }, JWT_SECRET_KEY, {
+        expiresIn: "10m",
       });
+      const cookieConfig = `token=${token}; HttpOnly; SameSite=None; Max-Age=600; Path=/`;
+      
+      response.setHeader("Set-Cookie", cookieConfig);
+      return sendResponse(response, 201, {
+        success: true,
+        message: "User registered and logged in successfully!",
+      });
+
     } catch (error) {
       return sendResponse(response, 500, { error: "Internal Server Error" });
     }
@@ -178,4 +183,10 @@ const server = http.createServer(async (request, response) => {
   }
 
   return sendResponse(response, 404, { error: "Route not found" });
+});
+
+// STARTING THE SERVER
+
+server.listen(PORT, () => {
+  console.log(`Listening at ${PORT}...`);
 });

@@ -8,3 +8,7 @@ Profile Management: Allowing users to view/update their personal details.
 GitHub
 GitHub
  +4
+
+ There is a minor security flaw in the server.js file with CORS headers. Upon production, we must update the origin variable with our domain name to ensure maximum and robust security. For now, leave it be until all tests are completed.
+
+ MockDB.js must also be overhauled using PostgreSQL. 
