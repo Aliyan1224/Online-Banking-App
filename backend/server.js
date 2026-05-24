@@ -4,6 +4,11 @@ import jwt from "jsonwebtoken";
 import * as db from "./mockDB.js";
 import bcrypt from "bcrypt";
 
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 const PORT = 6767;
 const JWT_SECRET_KEY =
   process.env.JWT_SECRET || "SECRET_JSON_KEY_VERY_VERY_CONFIDENTIAL_1255777";
@@ -52,6 +57,33 @@ const server = http.createServer(async (request, response) => {
       "Access-Control-Allow-Headers": "Content-Type",
     });
     return response.end();
+  }
+
+  // serve static html files
+
+  if (method === "GET" && !url.startsWith("/auth")) {
+    const safePath = url === "/" ? "/Home.html" : url;
+    const filePath = path.join(__dirname, "..", safePath);
+    const ext = path.extname(filePath);
+    const mimeTypes = {
+      ".html": "text/html",
+      ".js": "application/javascript",
+      ".css": "text/css",
+      ".png": "image/png",
+      ".jpg": "image/jpeg",
+    };
+    try {
+      const content = fs.readFileSync(filePath);
+      response.writeHead(200, {
+        "Content-Type": mimeTypes[ext] || "text/plain",
+      });
+      response.end(content);
+      return;
+    } catch {
+      response.writeHead(404);
+      response.end("Not found");
+      return;
+    }
   }
 
   if (url === "/auth/login" && method === "POST") {
@@ -133,7 +165,6 @@ const server = http.createServer(async (request, response) => {
       );
       const cookieConfig = `token=${token}; HttpOnly; SameSite=Lax; Max-Age=600; Path=/`;
 
-      response.setHeader("Set-Cookie", cookieConfig);
       return sendResponse(
         response,
         201,
