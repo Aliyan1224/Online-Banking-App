@@ -4,7 +4,6 @@ import jwt from "jsonwebtoken";
 import * as db from "./mockDB.js";
 import bcrypt from "bcrypt";
 
-
 const PORT = 6767;
 const JWT_SECRET_KEY =
   process.env.JWT_SECRET || "SECRET_JSON_KEY_VERY_VERY_CONFIDENTIAL_1255777";
@@ -26,13 +25,14 @@ async function parseRequestBody(req) {
   });
 }
 
-function sendResponse(response, statusCode, payload) {
+function sendResponse(response, statusCode, payload, extraHeaders = {}) {
   response.writeHead(statusCode, {
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": ALLOWED_ORIGIN, 
+    "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
     "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-    "Access-Control-Allow-Credentials": "true"
+    "Access-Control-Allow-Credentials": "true",
+    ...extraHeaders,
   });
   response.end(JSON.stringify(payload));
 }
@@ -40,7 +40,7 @@ function sendResponse(response, statusCode, payload) {
 const server = http.createServer(async (request, response) => {
   response.setHeader("Content-Type", "application/json");
   const url = request.url;
-  console.log(url)
+  console.log(url);
   const method = request.method;
 
   // CORS Preflight
@@ -77,8 +77,12 @@ const server = http.createServer(async (request, response) => {
         expiresIn: "10m",
       });
       const cookieConfig = `token=${token}; HttpOnly; SameSite=Lax; Max-Age=600; Path=/`; // have to add a secure flag if/after plublishing it in a secure https site domain! also change sameSit from Lax to Strict
-      response.setHeader("Set-Cookie", cookieConfig);
-      return sendResponse(response, 200,{ success: true, message: "Login successful!" });
+      return sendResponse(
+        response,
+        200,
+        { success: true, message: "Login successful!" },
+        { "Set-Cookie": cookieConfig },
+      );
     } catch (error) {
       return sendResponse(response, 500, { error: "Internal Server Error" });
     }
@@ -90,12 +94,16 @@ const server = http.createServer(async (request, response) => {
       const { name, email, password } = body;
 
       if (!name || !email || !password) {
-        return sendResponse(response, 400, { error: "Missing required fields" });
+        return sendResponse(response, 400, {
+          error: "Missing required fields",
+        });
       }
 
       const userExists = db.findUserByEmail(email);
       if (userExists) {
-        return sendResponse(response, 409, { error: "Email already registered" });
+        return sendResponse(response, 409, {
+          error: "Email already registered",
+        });
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -116,18 +124,25 @@ const server = http.createServer(async (request, response) => {
         currency: "PKR",
       });
 
-      const token = jwt.sign({ accountNumber: newUser.accountNumber }, JWT_SECRET_KEY, {
-        expiresIn: "10m",
-      });
+      const token = jwt.sign(
+        { accountNumber: newUser.accountNumber },
+        JWT_SECRET_KEY,
+        {
+          expiresIn: "10m",
+        },
+      );
       const cookieConfig = `token=${token}; HttpOnly; SameSite=Lax; Max-Age=600; Path=/`;
 
-      
       response.setHeader("Set-Cookie", cookieConfig);
-      return sendResponse(response, 201, {
-        success: true,
-        message: "User registered and logged in successfully!",
-      });
-
+      return sendResponse(
+        response,
+        201,
+        {
+          success: true,
+          message: "User registered and logged in successfully!",
+        },
+        { "Set-Cookie": cookieConfig },
+      );
     } catch (error) {
       return sendResponse(response, 500, { error: "Internal Server Error" });
     }
@@ -171,12 +186,14 @@ const server = http.createServer(async (request, response) => {
           email: user.email,
           role: user.role,
         },
-        wallet: wallet ? {
-          id: wallet.id,
-          user_id: user.id,
-          balance: wallet.balance,
-          currency: wallet.currency,
-        }:null,
+        wallet: wallet
+          ? {
+              id: wallet.id,
+              user_id: user.id,
+              balance: wallet.balance,
+              currency: wallet.currency,
+            }
+          : null,
       });
     } catch (error) {
       return sendResponse(response, 500, { error: "Internal server error" });
