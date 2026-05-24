@@ -25,9 +25,10 @@ async function parseRequestBody(req) {
 }
 
 function sendResponse(response, statusCode, payload) {
+  const origin = request.headers.origin || "*"; // Security Vulneribility. MUST be changed on production (MUST!!!)
   response.writeHead(statusCode, {
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*", // to be changed on production (MUST!!!)
+    "Access-Control-Allow-Origin": "*", 
     "Access-Control-Allow-Headers": "Content-Type",
   });
   response.end(JSON.stringify(payload));
@@ -37,6 +38,7 @@ const server = http.createServer(async (request, response) => {
   response.setHeader("Content-Type", "application/json");
   const url = request.url;
   const method = request.method;
+  const origin = request.headers.origin || "*"; // Security Vulneribility. MUST be changed on production (MUST!!!)
 
   // CORS Preflight
   if (method === "OPTIONS") {
@@ -90,17 +92,18 @@ const server = http.createServer(async (request, response) => {
       const { name, email, password } = body;
 
       if (!name || !email || !password) {
-        return sendJSON(res, 400, { error: "Missing required fields" });
+        return sendResponse(res, 400, { error: "Missing required fields" });
       }
 
       const userExists = db.findUserByEmail(email);
       if (userExists) {
-        return sendJSON(res, 409, { error: "Email already registered" });
+        return sendResponse(res, 409, { error: "Email already registered" });
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
       const newUser = {
         id: crypto.randomUUID(),
+        accountNumber: db.generateNextAccountNumber(),
         name,
         email,
         password_hash: hashedPassword,
@@ -115,7 +118,7 @@ const server = http.createServer(async (request, response) => {
         currency: "PKR",
       });
 
-      return sendJSON(res, 201, {
+      return sendResponse(res, 201, {
         success: true,
         message: "User registered successfully!",
       });
@@ -123,5 +126,56 @@ const server = http.createServer(async (request, response) => {
       return sendResponse(response, 500, { error: "Internal Server Error" });
     }
   }
+
+  if (url === "/auth/profile" && method === "GET") {
+    try {
+      const cookieHeader = request.headers.cookie || "";
+
+      const tokenMatch = cookieHeader.match(/token=([^;]+)/);
+      const token = tokenMatch ? tokenMatch[1] : null;
+
+      if (!token) {
+        return sendResponse(response, 401, {
+          error: "Not authenticated. No token found.",
+        });
+      }
+
+      let decoded;
+      try {
+        decoded = jwt.verify(token, JWT_SECRET_KEY);
+      } catch (err) {
+        return sendResponse(response, 401, {
+          error: "Session expired or invalid token.",
+        });
+      }
+
+      const user = db.findUserByAccNumber(decoded.accountNumber);
+      if (!user) {
+        return sendResponse(response, 404, { error: "User not found." });
+      }
+
+      const wallet = db.findWalletByUserId(user.id);
+
+      return sendResponse(response, 200, {
+        success: true,
+        user: {
+          id: user.id,
+          accountNumber: user.accountNumber,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+        wallet: wallet ? {
+          id: wallet.id,
+          user_id: user.id,
+          balance: wallet.balance,
+          currency: wallet.currency,
+        }:null,
+      });
+    } catch (error) {
+      return sendResponse(response, 500, { error: "Internal server error" });
+    }
+  }
+
   return sendResponse(response, 404, { error: "Route not found" });
 });
