@@ -65,23 +65,20 @@ export function recordTransaction(transaction) {
   transactions.push(transaction); 
 }
 export const getUserTransactions = (userId) => {
-  // 1. Filter: Include transfers (sender/receiver) OR single-party (userId)
   const userTxns = transactions.filter(
     t => t.sender_id === userId || t.receiver_id === userId || t.userId === userId
   );
 
   return userTxns.map(txn => {
-    // 2. Check if it is a Deposit/Withdrawal (uses 'userId')
     if (txn.userId === userId) {
       return {
         id: txn.id,
-        type: txn.type, // "Deposit" or "Withdrawal"
+        type: txn.type, 
         amount: txn.amount,
         timestamp: txn.timestamp
       };
     } 
     
-    // 3. Otherwise, handle it as a Transfer (Sent/Received)
     const isSender = txn.sender_id === userId;
     const otherUserId = isSender ? txn.receiver_id : txn.sender_id;
     const otherUser = users.find(u => u.id === otherUserId) || {};
@@ -98,3 +95,46 @@ export const getUserTransactions = (userId) => {
     };
   }).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)); 
 };
+
+
+export const getAllUsers = () => {
+  return users.map(u => ({
+    id: u.id,
+    accountNumber: u.accountNumber,
+    name: u.name,
+    email: u.email,
+    role: u.role,
+    isFrozen: u.isFrozen || false,
+    dateCreated: u.dateCreated,
+  }));
+};
+ 
+// ─── NEW: delete a user and their wallet ─────────────────────
+export const deleteUser = (userId) => {
+  const uIdx = users.findIndex(u => u.id === userId);
+  if (uIdx === -1) return false;
+  users.splice(uIdx, 1);
+ 
+  const wIdx = wallets.findIndex(w => w.user_id === userId);
+  if (wIdx !== -1) wallets.splice(wIdx, 1);
+ 
+  return true;
+};
+ 
+// ─── NEW: toggle freeze on a user ────────────────────────────
+export const setUserFrozen = (userId, frozen) => {
+  const user = users.find(u => u.id === userId);
+  if (!user) return false;
+  user.isFrozen = frozen;
+  return true;
+};
+ 
+// ─── NEW: check if a user is frozen ──────────────────────────
+export const isUserFrozen = (userId) => {
+  const user = users.find(u => u.id === userId);
+  return user ? (user.isFrozen || false) : false;
+};
+ 
+
+
+

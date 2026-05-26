@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard — NeoPay</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ── Admin Dashboard Scoped Styles ── */
+
+    .admin-wrapper {
+      width: 90%;
+      max-width: 1200px;
+      margin: 30px auto;
+    }
+
+    .admin-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .admin-header-bar h2 {
+      font-size: 22px;
+      color: var(--pink-accent);
+      font-weight: bold;
+    }
+
+    .admin-header-bar span {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    /* Search */
+    .admin-search-bar {
+      width: 100%;
+      height: 40px;
+      padding: 8px 14px;
+      background: #2a2a2d;
+      border: 1px solid var(--magenta);
+      border-radius: 8px;
+      color: var(--text-white);
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    /* Table */
+    .admin-table-wrapper {
+      overflow-x: auto;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .admin-table thead tr {
+      background: var(--deep-purple);
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.8px;
+      color: var(--pink-accent);
+    }
+
+    .admin-table th,
+    .admin-table td {
+      padding: 13px 16px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .admin-table tbody tr {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      transition: background 0.15s;
+    }
+
+    .admin-table tbody tr:hover {
+      background: rgba(166, 83, 122, 0.08);
+    }
+
+    .admin-table tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    /* Status badge */
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: bold;
+    }
+
+    .badge-active {
+      background: rgba(74, 222, 128, 0.15);
+      color: #4ade80;
+    }
+
+    .badge-frozen {
+      background: rgba(248, 113, 113, 0.15);
+      color: #f87171;
+    }
+
+    /* Action buttons */
+    .action-btn {
+      padding: 5px 11px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      border: none;
+      margin-right: 5px;
+    }
+
+    .action-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-info {
+      background: rgba(110, 37, 82, 0.6);
+      color: var(--text-white);
+    }
+
+    .btn-info:hover {
+      background: var(--magenta);
+    }
+
+    .btn-txn {
+      background: rgba(59, 31, 49, 0.8);
+      color: rgba(255, 255, 255, 0.75);
+      border: 1px solid var(--magenta);
+    }
+
+    .btn-txn:hover {
+      background: var(--deep-purple);
+    }
+
+    .btn-freeze {
+      background: rgba(251, 191, 36, 0.15);
+      color: #fbbf24;
+    }
+
+    .btn-freeze:hover {
+      background: rgba(251, 191, 36, 0.3);
+    }
+
+    .btn-unfreeze {
+      background: rgba(74, 222, 128, 0.15);
+      color: #4ade80;
+    }
+
+    .btn-unfreeze:hover {
+      background: rgba(74, 222, 128, 0.3);
+    }
+
+    .btn-delete {
+      background: rgba(248, 65, 65, 0.15);
+      color: #f87171;
+    }
+
+    .btn-delete:hover {
+      background: rgba(248, 65, 65, 0.3);
+    }
+
+    /* Modal overlay */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 900;
+    }
+
+    .modal-overlay.active {
+      display: block;
+    }
+
+    /* Modal card (reuses existing card styles + additions) */
+    .admin-modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: var(--deep-purple);
+      border: 2px solid var(--magenta);
+      padding: 24px;
+      border-radius: 12px;
+      width: 420px;
+      max-width: 92vw;
+      z-index: 1000;
+    }
+
+    .admin-modal.active {
+      display: block;
+    }
+
+    .admin-modal h3 {
+      font-size: 20px;
+      font-weight: bold;
+      color: var(--pink-accent);
+      margin-bottom: 18px;
+    }
+
+    .admin-modal p {
+      font-size: 13px;
+      margin: 7px 0;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .admin-modal p b {
+      color: var(--text-white);
+    }
+
+    .admin-modal-close {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      background: transparent;
+      color: var(--text-white);
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+    }
+
+    /* Txn list inside modal */
+    .modal-txn-list {
+      max-height: 280px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 8px;
+      padding-right: 4px;
+    }
+
+    /* Confirm delete modal */
+    .confirm-modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      justify-content: flex-end;
+    }
+
+    .confirm-modal-actions .action-btn {
+      padding: 8px 18px;
+      font-size: 13px;
+    }
+
+    /* Empty / loading states */
+    .state-msg {
+      text-align: center;
+      color: rgba(255, 255, 255, 0.35);
+      font-size: 13px;
+      padding: 30px 0;
+    }
+
+    /* Stat cards row */
+    .stat-row {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      flex: 1;
+      min-width: 140px;
+      background: var(--glass);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 16px 20px;
+      backdrop-filter: blur(8px);
+    }
+
+    .stat-card p {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--pink-accent);
+      margin-bottom: 6px;
+    }
+
+    .stat-card h2 {
+      font-size: 26px;
+      font-weight: bold;
+      color: var(--text-white);
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Nav -->
+  <div class="nav">
+    <a href="#">
+      <h1>NeoPay</h1>
+    </a>
+    <div class="buttons">
+      <span style="color: var(--pink-accent); font-size: 13px; align-self: center;">Admin Panel</span>
+      <a href="admin.html"><button class="button button2">Logout</button></a>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <div class="admin-wrapper">
+    <!-- Header row -->
+    <div class="admin-header-bar">
+      <h2>User Management</h2>
+      <span id="admin-last-updated"></span>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="stat-row">
+      <div class="stat-card">
+        <p>Total Users</p>
+        <h2 id="stat-total">—</h2>
+      </div>
+      <div class="stat-card">
+        <p>Active</p>
+        <h2 id="stat-active">—</h2>
+      </div>
+      <div class="stat-card">
+        <p>Frozen</p>
+        <h2 id="stat-frozen">—</h2>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <input
+      type="text"
+      id="admin-search"
+      class="admin-search-bar"
+      placeholder="Search by name, email, or account number…"
+    />
+
+    <!-- Table -->
+    <div class="admin-table-wrapper">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Account No.</th>
+            <th>Balance</th>
+            <th>Status</th>
+            <th>Joined</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="users-table-body">
+          <tr>
+            <td colspan="7" class="state-msg">Loading users…</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal overlay (background dim) -->
+  <div class="modal-overlay" id="modal-overlay"></div>
+
+  <!-- User Info Modal -->
+  <div class="admin-modal" id="user-info-modal">
+    <button class="admin-modal-close" id="close-user-info">❌</button>
+    <h3>User Info</h3>
+    <p><b>Name:</b> <span id="modal-info-name"></span></p>
+    <p><b>Account No:</b> <span id="modal-info-accno"></span></p>
+    <p><b>Email:</b> <span id="modal-info-email"></span></p>
+    <p><b>Wallet Balance:</b> <span id="modal-info-balance"></span></p>
+    <p><b>Status:</b> <span id="modal-info-status"></span></p>
+    <p><b>Joined:</b> <span id="modal-info-joined"></span></p>
+  </div>
+
+  <!-- Transaction History Modal -->
+  <div class="admin-modal" id="txn-modal">
+    <button class="admin-modal-close" id="close-txn-modal">❌</button>
+    <h3>Transaction History</h3>
+    <p id="txn-modal-subtitle" style="color: rgba(255,255,255,0.45); font-size: 12px; margin-bottom: 10px;"></p>
+    <div class="modal-txn-list" id="modal-txn-list">
+      <p class="state-msg">Loading…</p>
+    </div>
+  </div>
+
+  <!-- Delete Confirm Modal -->
+  <div class="admin-modal" id="delete-modal">
+    <button class="admin-modal-close" id="close-delete-modal">❌</button>
+    <h3>Delete User</h3>
+    <p>Are you sure you want to permanently delete <b><span id="delete-modal-name"></span></b>? This cannot be undone.</p>
+    <div class="confirm-modal-actions">
+      <button class="action-btn btn-txn" id="cancel-delete-btn">Cancel</button>
+      <button class="action-btn btn-delete" id="confirm-delete-btn">Delete</button>
+    </div>
+  </div>
+
+  <script type="module" src="frontend/adminDashboard.js"></script>
+</body>
+
+</html>

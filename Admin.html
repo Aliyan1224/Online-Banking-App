@@ -2,20 +2,24 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — NeoPay</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    <div class="card">
-        <h1>Admin Login</h1>
-        <div class="form-input">
-            <input type="Admin Password" class="form" placeholder="Admin Password">
-        </div>
-        <button class="button" type="submit">Login</button>
+  <div class="card">
+    <h1>Admin Login</h1>
+    <p class="para" style="margin-bottom: 10px; font-size: 14px;">NeoPay Internal Access</p>
+    <div class="form-input">
+      <input type="password" id="admin-password-input" class="form" placeholder="Admin Password">
     </div>
+    <p id="error-message" style="color: red; font-size: 13px; margin-bottom: 10px; display: none;"></p>
+    <button class="button" id="admin-login-btn" type="button">Login</button>
+  </div>
+
+  <script src="frontend/admin.js" defer></script>
 </body>
 
 </html>

@@ -14,6 +14,33 @@ const JWT_SECRET_KEY =
   process.env.JWT_SECRET || "SECRET_JSON_KEY_VERY_VERY_CONFIDENTIAL_1255777";
 const ALLOWED_ORIGIN = "http://localhost:5500"; // Security Vulneribility. MUST be changed on production (MUST!!!)
 
+const ADMIN_SECRET = process.env.ADMIN_SECRET || "NeoPay@AdminSecret#2025";
+
+(async () => {
+  const existing = db.findUserByEmail("admin@neopay.internal");
+  if (!existing) {
+    const hashedAdminPw = await bcrypt.hash(ADMIN_SECRET, 10);
+    const adminUser = {
+      id: crypto.randomUUID(),
+      accountNumber: "0000000000", // reserved admin account number
+      name: "NeoPay Admin",
+      email: "admin@neopay.internal",
+      password_hash: hashedAdminPw,
+      role: "admin",
+      isFrozen: false,
+      dateCreated: Date.now(),
+    };
+    db.createUser(adminUser);
+    db.createWallet({
+      id: crypto.randomUUID(),
+      user_id: adminUser.id,
+      balance: 0,
+      currency: "PKR",
+    });
+    console.log("[Admin] Admin user seeded.");
+  }
+})();
+
 async function parseRequestBody(req) {
   return new Promise((resolve, reject) => {
     let body = "";
@@ -62,10 +89,12 @@ const server = http.createServer(async (request, response) => {
   // serve static html files
 
   if (
-    method === "GET" &&
-    !url.startsWith("/auth") &&
-    !url.startsWith("/wallet")
-  ) {
+  method === "GET" &&
+  !url.startsWith("/auth") &&
+  !url.startsWith("/wallet") &&
+  url !== "/admin/login" &&
+  !url.startsWith("/admin/users")
+) {
     const safePath = url === "/" ? "/Home.html" : url;
     const filePath = path.join(__dirname, "..", safePath);
     const ext = path.extname(filePath);
@@ -262,6 +291,12 @@ const server = http.createServer(async (request, response) => {
         return sendResponse(response, 404, { error: "User not found." });
       }
 
+      if (db.isUserFrozen(user.id)) {
+        return sendResponse(response, 403, {
+          error: "Your account has been frozen. Please contact support.",
+        });
+      }
+
       const { amount } = await parseRequestBody(request);
       if (!amount || amount <= 0) {
         return sendResponse(response, 400, {
@@ -281,7 +316,7 @@ const server = http.createServer(async (request, response) => {
         userId: user.id,
         type: "Deposit",
         amount: amount,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
 
       return sendResponse(response, 200, {
@@ -319,6 +354,13 @@ const server = http.createServer(async (request, response) => {
         return sendResponse(response, 404, { error: "User not found." });
       }
 
+     if (db.isUserFrozen(user.id)) {
+        return sendResponse(response, 403, {
+          error: "Your account has been frozen. Please contact support.",
+        });
+      }
+
+
       const { amount } = await parseRequestBody(request);
       if (!amount || amount <= 0) {
         return sendResponse(response, 400, {
@@ -342,9 +384,8 @@ const server = http.createServer(async (request, response) => {
         userId: user.id,
         type: "Withdrawal",
         amount: amount,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
-
 
       return sendResponse(response, 200, {
         success: true,
@@ -380,6 +421,13 @@ const server = http.createServer(async (request, response) => {
       if (!sender) {
         return sendResponse(response, 404, { error: "User not found." });
       }
+
+      if (db.isUserFrozen(sender.id)) {
+        return sendResponse(response, 403, {
+          error: "Your account has been frozen. Please contact support.",
+        });
+      }
+
 
       const { amount, recipient } = await parseRequestBody(request);
 
@@ -474,6 +522,125 @@ const server = http.createServer(async (request, response) => {
       console.error("Transaction Fetch Error:", error);
       return sendResponse(response, 500, { error: "Internal server error" });
     }
+  }
+
+  if (url === "/admin/login" && method === "POST") {
+    try {
+      const { password } = await parseRequestBody(request);
+      if (!password) {
+        return sendResponse(response, 400, { error: "Password required." });
+      }
+
+      const adminUser = db.findUserByEmail("admin@neopay.internal");
+      if (!adminUser) {
+        return sendResponse(response, 500, { error: "Admin not configured." });
+      }
+
+      const isMatch = await bcrypt.compare(password, adminUser.password_hash);
+      if (!isMatch) {
+        return sendResponse(response, 401, {
+          error: "Incorrect admin password.",
+        });
+      }
+
+      const token = jwt.sign(
+        { accountNumber: adminUser.accountNumber, role: "admin" },
+        JWT_SECRET_KEY,
+        { expiresIn: "30m" },
+      );
+      const cookieConfig = `adminToken=${token}; HttpOnly; SameSite=Lax; Max-Age=1800; Path=/`;
+      return sendResponse(
+        response,
+        200,
+        { success: true, message: "Admin login successful." },
+        { "Set-Cookie": cookieConfig },
+      );
+    } catch (err) {
+      return sendResponse(response, 500, { error: "Internal server error" });
+    }
+  }
+
+  // ─── ADMIN AUTH HELPER (inline, used by admin routes below) ──
+  function verifyAdminToken(request) {
+    const cookieHeader = request.headers.cookie || "";
+    const match = cookieHeader.match(/adminToken=([^;]+)/);
+    if (!match) return null;
+    try {
+      const decoded = jwt.verify(match[1], JWT_SECRET_KEY);
+      if (decoded.role !== "admin") return null;
+      return decoded;
+    } catch {
+      return null;
+    }
+  }
+
+  if (url === "/admin/users" && method === "GET") {
+    const admin = verifyAdminToken(request);
+    if (!admin) return sendResponse(response, 401, { error: "Unauthorized." });
+
+    const users = db.getAllUsers().filter((u) => u.role !== "admin");
+    const usersWithBalance = users.map((u) => {
+      const wallet = db.findWalletByUserId(u.id);
+      return {
+        ...u,
+        balance: wallet ? wallet.balance : 0,
+        currency: wallet ? wallet.currency : "PKR",
+      };
+    });
+    return sendResponse(response, 200, {
+      success: true,
+      users: usersWithBalance,
+    });
+  }
+
+  if (
+    url.startsWith("/admin/users/") &&
+    url.endsWith("/transactions") &&
+    method === "GET"
+  ) {
+    const admin = verifyAdminToken(request);
+    if (!admin) return sendResponse(response, 401, { error: "Unauthorized." });
+
+    const userId = url.split("/")[3];
+    const transactions = db.getUserTransactions(userId);
+    return sendResponse(response, 200, { success: true, transactions });
+  }
+
+  if (
+    url.startsWith("/admin/users/") &&
+    url.endsWith("/delete") &&
+    method === "POST"
+  ) {
+    const admin = verifyAdminToken(request);
+    if (!admin) return sendResponse(response, 401, { error: "Unauthorized." });
+
+    const userId = url.split("/")[3];
+    const deleted = db.deleteUser(userId);
+    if (!deleted)
+      return sendResponse(response, 404, { error: "User not found." });
+    return sendResponse(response, 200, {
+      success: true,
+      message: "User deleted.",
+    });
+  }
+
+  if (
+    url.startsWith("/admin/users/") &&
+    url.endsWith("/freeze") &&
+    method === "POST"
+  ) {
+    const admin = verifyAdminToken(request);
+    if (!admin) return sendResponse(response, 401, { error: "Unauthorized." });
+
+    const userId = url.split("/")[3];
+    const { frozen } = await parseRequestBody(request);
+    const result = db.setUserFrozen(userId, !!frozen);
+    if (!result)
+      return sendResponse(response, 404, { error: "User not found." });
+    return sendResponse(response, 200, {
+      success: true,
+      message: frozen ? "User frozen." : "User unfrozen.",
+    });
   }
 
   return sendResponse(response, 404, { error: "Route not found" });
