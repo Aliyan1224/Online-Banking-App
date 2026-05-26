@@ -10,7 +10,7 @@
 
 <body>
     <div class="nav">
-        <a href="Home.html">
+        <a href="#">
             <h1>NeoPay</h1>
         </a>
         <div class="buttons">
@@ -61,10 +61,30 @@
         <h3>Withdraw Funds</h3>
         <p>Enter Withdrawal Amount:</p>
         <form id="withdraw-form">
-            <input type="text" id="withdraw-input" placeholder="Amount" required />
-            <p id="withdraw-info-interactive">Remaining Balance: </p>
+            <input type="number" id="withdraw-input" placeholder="Amount" required />
+            <p id="withdraw-info-interactive">Remaining Balance: <span id="remaining-balance"></span></p>
             <button type="submit" id="withdraw-submit" class="action-submit-btn">Withdraw</button>
         </form>
+    </div>
+
+    <div class="transfer-card" id="transfer-card">
+        <button id="close-transfer-card">❌</button>
+        <h3>Transfer Funds</h3>
+        <p>Enter Transfer Details:</p>
+        <form id="transfer-form">
+            <input type="text" id="transfer-recipient-input" placeholder="Recipient Email or Wallet ID" required />
+            <input type="number" id="transfer-amount-input" placeholder="Amount" required />
+            <p id="transfer-info-interactive">Remaining Balance: <span id="transfer-remaining-balance"></span></p>
+            <button type="submit" id="transfer-submit" class="action-submit-btn">Transfer</button>
+        </form>
+    </div>
+
+    <div class="txn-history-card" id="txn-history-card">
+        <button id="close-txn-history-card">❌</button>
+        <h3>Transaction History</h3>
+        <div class="txn-list-container" id="txn-list-container">
+            <p>Loading transactions...</p>
+        </div>
     </div>
 
     <script type="module" src="frontend/dashboard.js"></script>

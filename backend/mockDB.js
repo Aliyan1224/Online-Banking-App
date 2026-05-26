@@ -12,6 +12,10 @@ export function generateNextAccountNumber() {
   return current.toString();
 }
 
+export const findWalletById = (walletId) => {
+  return wallets.find(w => w.id === walletId) || null;
+};
+
 export const findUserByEmail = (email) => {
   return users.find(u => u.email === email) || null;
 };
@@ -55,4 +59,28 @@ export const executeTransfer = (senderId, receiverId, amountInCents) => {
   
   transactions.push(txn);
   return txn;
+};
+
+export function recordTransaction(transaction) {
+  transactions.push(transaction); 
+}
+
+export const getUserTransactions = (userId) => {
+  const userTxns = transactions.filter(t => t.sender_id === userId || t.receiver_id === userId);
+  return userTxns.map(txn => {
+    const isSender = txn.sender_id === userId;
+    const otherUserId = isSender ? txn.receiver_id : txn.sender_id;
+    const otherUser = users.find(u => u.id === otherUserId) || {};
+
+    return {
+      id: txn.id,
+      type: isSender ? 'Sent' : 'Received',
+      amount: txn.amount,
+      timestamp: txn.timestamp,
+      otherParty: {
+        name: otherUser.name || 'Unknown User',
+        email: otherUser.email || 'Unknown Email'
+      }
+    };
+  }).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)); 
 };

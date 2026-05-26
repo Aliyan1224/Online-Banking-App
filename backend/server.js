@@ -61,7 +61,11 @@ const server = http.createServer(async (request, response) => {
 
   // serve static html files
 
-  if (method === "GET" && !url.startsWith("/auth")) {
+  if (
+    method === "GET" &&
+    !url.startsWith("/auth") &&
+    !url.startsWith("/wallet")
+  ) {
     const safePath = url === "/" ? "/Home.html" : url;
     const filePath = path.join(__dirname, "..", safePath);
     const ext = path.extname(filePath);
@@ -146,7 +150,7 @@ const server = http.createServer(async (request, response) => {
         email,
         password_hash: hashedPassword,
         role: "user",
-        dateCreated: Date.now()
+        dateCreated: Date.now(),
       };
       db.createUser(newUser);
 
@@ -217,7 +221,7 @@ const server = http.createServer(async (request, response) => {
           name: user.name,
           email: user.email,
           role: user.role,
-          dateCreated: user.dateCreated
+          dateCreated: user.dateCreated,
         },
         wallet: wallet
           ? {
@@ -229,6 +233,245 @@ const server = http.createServer(async (request, response) => {
           : null,
       });
     } catch (error) {
+      return sendResponse(response, 500, { error: "Internal server error" });
+    }
+  }
+
+  // --- WALLET DEPOSIT ROUTE ---
+  if (url === "/wallet/deposit" && method === "POST") {
+    try {
+      const cookieHeader = request.headers.cookie || "";
+      const tokenMatch = cookieHeader.match(/token=([^;]+)/);
+      const token = tokenMatch ? tokenMatch[1] : null;
+
+      if (!token) {
+        return sendResponse(response, 401, { error: "Not authenticated." });
+      }
+
+      let decoded;
+      try {
+        decoded = jwt.verify(token, JWT_SECRET_KEY);
+      } catch (err) {
+        return sendResponse(response, 401, {
+          error: "Session expired or invalid token.",
+        });
+      }
+
+      const user = db.findUserByAccNumber(decoded.accountNumber);
+      if (!user) {
+        return sendResponse(response, 404, { error: "User not found." });
+      }
+
+      const { amount } = await parseRequestBody(request);
+      if (!amount || amount <= 0) {
+        return sendResponse(response, 400, {
+          error: "Invalid deposit amount.",
+        });
+      }
+
+      const wallet = db.findWalletByUserId(user.id);
+      if (!wallet) {
+        return sendResponse(response, 404, { error: "Wallet not found." });
+      }
+
+      wallet.balance += amount;
+
+      db.recordTransaction({
+        id: crypto.randomUUID(),
+        userId: user.id,
+        type: "Deposit",
+        amount: amount,
+        timestamp: Date.now()
+      });
+
+      return sendResponse(response, 200, {
+        success: true,
+        message: "Deposit processed successfully.",
+        newBalance: wallet.balance,
+      });
+    } catch (error) {
+      return sendResponse(response, 500, { error: "Internal server error" });
+    }
+  }
+
+  // --- WALLET WITHDRAW ROUTE ---
+  if (url === "/wallet/withdraw" && method === "POST") {
+    try {
+      const cookieHeader = request.headers.cookie || "";
+      const tokenMatch = cookieHeader.match(/token=([^;]+)/);
+      const token = tokenMatch ? tokenMatch[1] : null;
+
+      if (!token) {
+        return sendResponse(response, 401, { error: "Not authenticated." });
+      }
+
+      let decoded;
+      try {
+        decoded = jwt.verify(token, JWT_SECRET_KEY);
+      } catch (err) {
+        return sendResponse(response, 401, {
+          error: "Session expired or invalid token.",
+        });
+      }
+
+      const user = db.findUserByAccNumber(decoded.accountNumber);
+      if (!user) {
+        return sendResponse(response, 404, { error: "User not found." });
+      }
+
+      const { amount } = await parseRequestBody(request);
+      if (!amount || amount <= 0) {
+        return sendResponse(response, 400, {
+          error: "Invalid withdrawal amount.",
+        });
+      }
+
+      const wallet = db.findWalletByUserId(user.id);
+      if (!wallet) {
+        return sendResponse(response, 404, { error: "Wallet not found." });
+      }
+
+      if (wallet.balance < amount) {
+        return sendResponse(response, 400, { error: "Insufficient funds." });
+      }
+
+      wallet.balance -= amount;
+
+      db.recordTransaction({
+        id: crypto.randomUUID(),
+        userId: user.id,
+        type: "Deposit",
+        amount: amount,
+        timestamp: Date.now()
+      });
+
+
+      return sendResponse(response, 200, {
+        success: true,
+        message: "Withdrawal processed successfully.",
+        newBalance: wallet.balance,
+      });
+    } catch (error) {
+      return sendResponse(response, 500, { error: "Internal server error" });
+    }
+  }
+
+  // --- WALLET TRANSFER ROUTE ---
+  if (url === "/wallet/transfer" && method === "POST") {
+    try {
+      const cookieHeader = request.headers.cookie || "";
+      const tokenMatch = cookieHeader.match(/token=([^;]+)/);
+      const token = tokenMatch ? tokenMatch[1] : null;
+
+      if (!token) {
+        return sendResponse(response, 401, { error: "Not authenticated." });
+      }
+
+      let decoded;
+      try {
+        decoded = jwt.verify(token, JWT_SECRET_KEY);
+      } catch (err) {
+        return sendResponse(response, 401, {
+          error: "Session expired or invalid token.",
+        });
+      }
+
+      const sender = db.findUserByAccNumber(decoded.accountNumber);
+      if (!sender) {
+        return sendResponse(response, 404, { error: "User not found." });
+      }
+
+      const { amount, recipient } = await parseRequestBody(request);
+
+      if (!amount || amount <= 0) {
+        return sendResponse(response, 400, {
+          error: "Invalid transfer amount.",
+        });
+      }
+      if (!recipient) {
+        return sendResponse(response, 400, {
+          error: "Recipient identifier missing.",
+        });
+      }
+
+      let recipientUserId = null;
+
+      // try searching recipient by email
+      const recipientUser = db.findUserByEmail(recipient);
+      if (recipientUser) {
+        recipientUserId = recipientUser.id;
+      } else {
+        // else try searching  by wallet id
+        const recipientWallet = db.findWalletById(recipient);
+        if (recipientWallet) {
+          recipientUserId = recipientWallet.user_id;
+        }
+      }
+
+      if (!recipientUserId) {
+        return sendResponse(response, 404, {
+          error: "Recipient not found. Please check the email or Wallet ID.",
+        });
+      }
+
+      if (recipientUserId === sender.id) {
+        return sendResponse(response, 400, {
+          error: "Cannot transfer to yourself.",
+        });
+      }
+
+      try {
+        db.executeTransfer(sender.id, recipientUserId, amount);
+      } catch (err) {
+        return sendResponse(response, 400, { error: err.message });
+      }
+
+      const updatedSenderWallet = db.findWalletByUserId(sender.id);
+
+      return sendResponse(response, 200, {
+        success: true,
+        message: "Transfer processed successfully.",
+        newBalance: updatedSenderWallet.balance,
+      });
+    } catch (error) {
+      console.error("Transfer Error:", error);
+      return sendResponse(response, 500, { error: "Internal server error" });
+    }
+  }
+
+  // --- TRANSACTION HISTORY ROUTE ---
+  if (url === "/wallet/transactions" && method === "GET") {
+    try {
+      const cookieHeader = request.headers.cookie || "";
+      const tokenMatch = cookieHeader.match(/token=([^;]+)/);
+      const token = tokenMatch ? tokenMatch[1] : null;
+
+      if (!token) {
+        return sendResponse(response, 401, { error: "Not authenticated." });
+      }
+
+      let decoded;
+      try {
+        decoded = jwt.verify(token, JWT_SECRET_KEY);
+      } catch (err) {
+        return sendResponse(response, 401, {
+          error: "Session expired or invalid token.",
+        });
+      }
+
+      const user = db.findUserByAccNumber(decoded.accountNumber);
+      if (!user) {
+        return sendResponse(response, 404, { error: "User not found." });
+      }
+
+      const history = db.getUserTransactions(user.id);
+
+      return sendResponse(response, 200, {
+        success: true,
+        transactions: history,
+      });
+    } catch (error) {
+      console.error("Transaction Fetch Error:", error);
       return sendResponse(response, 500, { error: "Internal server error" });
     }
   }

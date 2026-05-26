@@ -195,6 +195,16 @@ h1 {
 
 /* deposit card */
 
+.deposit-card h3, .withdraw-card h3{
+    font-size: 23px;
+    font-weight: bold;
+    margin-bottom: 28px;
+}
+
+.deposit-card p, .withdraw-card p{
+  font-size: 15px;
+}
+
 .deposit-card input, .withdraw-card input{
   height: 38px;
   margin: 10px 0;
@@ -222,8 +232,17 @@ h1 {
   cursor: pointer;
 }
 
+#dashboard-user-balance{
+  margin-top: 3px;
+}
+
 .warning {
-  color: #fbbf24;
+  color: #f83b0c;
+}
+
+#withdraw-info-interactive{
+  font-size: 13px;
+  margin-bottom: 10px;
 }
 
 .withdraw-card button:disabled {
@@ -238,6 +257,147 @@ h1 {
   background-color: var(--pink-accent);
   color: var(--text-white);
 }
+
+/* account info card and action cards */
+.account-info-card, .deposit-card, .withdraw-card, .transfer-card {
+  display: none; /* js change */
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: var(--deep-purple);
+  border: 2px solid var(--magenta);
+  padding: 20px;
+  border-radius: 10px;
+  width: 320px;
+  z-index: 1000;
+}
+
+/* action card headings */
+.deposit-card h3, .withdraw-card h3, .transfer-card h3 {
+    font-size: 23px;
+    font-weight: bold;
+    margin-bottom: 28px;
+}
+
+/* action card paragraphs */
+.deposit-card p, .withdraw-card p, .transfer-card p {
+  font-size: 15px;
+}
+
+/* action card inputs */
+.deposit-card input, .withdraw-card input, .transfer-card input {
+  height: 38px;
+  margin: 10px 0;
+  padding: 8px 12px;
+  background-color:#2a2a2d;
+  color: var(--text-white);
+  border: 1px solid var(--magenta);
+  border-radius: 8px;
+  width: 100%;
+}
+
+/* action card forms */
+.deposit-card form, .withdraw-card form, .transfer-card form {
+  display: flex;
+  flex-direction: column;
+}
+
+/* close buttons */
+#close-deposit-card, #close-withdraw-card, #close-transfer-card {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* interactive info elements */
+#withdraw-info-interactive, #transfer-info-interactive {
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+/* disabled submit buttons */
+.withdraw-card button:disabled, .transfer-card button:disabled {
+  background: #4a4a4a;
+  color: #8a8a8a;
+  cursor: not-allowed;
+}
+
+
+/* Update your existing group to include .txn-history-card */
+.account-info-card, .deposit-card, .withdraw-card, .transfer-card, .txn-history-card {
+  display: none; 
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: var(--deep-purple);
+  border: 2px solid var(--magenta);
+  padding: 20px;
+  border-radius: 10px;
+  width: 320px;
+  z-index: 1000;
+}
+
+/* Also update the heading group */
+.deposit-card h3, .withdraw-card h3, .transfer-card h3, .txn-history-card h3 {
+    font-size: 23px;
+    font-weight: bold;
+    margin-bottom: 28px;
+}
+
+/* NEW: Specific styles for the transaction list */
+.txn-list-container {
+    max-height: 250px;
+    overflow-y: auto;
+    padding-right: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Custom scrollbar for the list */
+.txn-list-container::-webkit-scrollbar {
+    width: 5px;
+}
+.txn-list-container::-webkit-scrollbar-thumb {
+    background: var(--pink-accent);
+    border-radius: 5px;
+}
+
+.txn-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #2a2a2d;
+    padding: 10px;
+    border-radius: 8px;
+    border-left: 3px solid var(--magenta);
+}
+
+.txn-item.sent { border-left-color: #f87171; }
+.txn-item.received { border-left-color: #4ade80; }
+
+.txn-info {
+    display: flex;
+    flex-direction: column;
+    font-size: 13px;
+}
+
+.txn-info strong { color: var(--text-white); font-size: 14px;}
+.txn-info span { color: rgba(255, 255, 255, 0.6); font-size: 11px;}
+.txn-info small { color: var(--pink-accent); font-size: 10px; margin-top: 3px; }
+
+.txn-amount {
+    font-weight: bold;
+    font-size: 15px;
+}
+
+.txn-amount.minus { color: #f87171; }
+.txn-amount.plus { color: #4ade80; }
+
 
 /* account info card */
 
