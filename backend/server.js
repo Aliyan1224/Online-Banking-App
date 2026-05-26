@@ -340,7 +340,7 @@ const server = http.createServer(async (request, response) => {
       db.recordTransaction({
         id: crypto.randomUUID(),
         userId: user.id,
-        type: "Deposit",
+        type: "Withdrawal",
         amount: amount,
         timestamp: Date.now()
       });

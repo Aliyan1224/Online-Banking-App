@@ -64,10 +64,24 @@ export const executeTransfer = (senderId, receiverId, amountInCents) => {
 export function recordTransaction(transaction) {
   transactions.push(transaction); 
 }
-
 export const getUserTransactions = (userId) => {
-  const userTxns = transactions.filter(t => t.sender_id === userId || t.receiver_id === userId);
+  // 1. Filter: Include transfers (sender/receiver) OR single-party (userId)
+  const userTxns = transactions.filter(
+    t => t.sender_id === userId || t.receiver_id === userId || t.userId === userId
+  );
+
   return userTxns.map(txn => {
+    // 2. Check if it is a Deposit/Withdrawal (uses 'userId')
+    if (txn.userId === userId) {
+      return {
+        id: txn.id,
+        type: txn.type, // "Deposit" or "Withdrawal"
+        amount: txn.amount,
+        timestamp: txn.timestamp
+      };
+    } 
+    
+    // 3. Otherwise, handle it as a Transfer (Sent/Received)
     const isSender = txn.sender_id === userId;
     const otherUserId = isSender ? txn.receiver_id : txn.sender_id;
     const otherUser = users.find(u => u.id === otherUserId) || {};
