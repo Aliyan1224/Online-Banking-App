@@ -258,7 +258,6 @@ h1 {
   color: var(--text-white);
 }
 
-/* account info card and action cards */
 .account-info-card, .deposit-card, .withdraw-card, .transfer-card {
   display: none; /* js change */
   position: fixed;
@@ -304,7 +303,7 @@ h1 {
 }
 
 /* close buttons */
-#close-deposit-card, #close-withdraw-card, #close-transfer-card {
+#close-deposit-card, #close-withdraw-card, #close-transfer-card, #close-txn-history-card {
   position: absolute;
   top: 10px;
   right: 15px;
@@ -312,13 +311,12 @@ h1 {
   cursor: pointer;
 }
 
-/* interactive info elements */
+
 #withdraw-info-interactive, #transfer-info-interactive {
   font-size: 13px;
   margin-bottom: 10px;
 }
 
-/* disabled submit buttons */
 .withdraw-card button:disabled, .transfer-card button:disabled {
   background: #4a4a4a;
   color: #8a8a8a;
@@ -326,7 +324,6 @@ h1 {
 }
 
 
-/* Update your existing group to include .txn-history-card */
 .account-info-card, .deposit-card, .withdraw-card, .transfer-card, .txn-history-card {
   display: none; 
   position: fixed;
@@ -341,14 +338,12 @@ h1 {
   z-index: 1000;
 }
 
-/* Also update the heading group */
 .deposit-card h3, .withdraw-card h3, .transfer-card h3, .txn-history-card h3 {
     font-size: 23px;
     font-weight: bold;
     margin-bottom: 28px;
 }
 
-/* NEW: Specific styles for the transaction list */
 .txn-list-container {
     max-height: 250px;
     overflow-y: auto;
@@ -358,14 +353,6 @@ h1 {
     gap: 12px;
 }
 
-/* Custom scrollbar for the list */
-.txn-list-container::-webkit-scrollbar {
-    width: 5px;
-}
-.txn-list-container::-webkit-scrollbar-thumb {
-    background: var(--pink-accent);
-    border-radius: 5px;
-}
 
 .txn-item {
     display: flex;
@@ -393,6 +380,11 @@ h1 {
 .txn-amount {
     font-weight: bold;
     font-size: 15px;
+}
+
+.txn-history-card, .deposit-card, .withdraw-card, .transfer-card {
+  width: 450px;
+  max-width: 90vw; 
 }
 
 .txn-amount.minus { color: #f87171; }
